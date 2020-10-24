@@ -49,7 +49,7 @@ void loop() {
   delay(1000);
   M5.update();
 }
-int displayTemperature(){
+void displayTemperature(){
   int cTemp = DHT.temperature;
   M5.Lcd.setCursor(0,0,1);
   M5.Lcd.setTextSize(5);
