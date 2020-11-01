@@ -2,17 +2,19 @@
 #include <WiFi.h>
 #include <M5Stack.h>
 #include <dht.h>
-const char *ssid     = "YourSSID";
-const char *password = "YourPassword";
+const char *ssid     = "mySSID";
+const char *password = "myPassword";
 //-14400 for US/NewYork UTC-04:00
 const long utcOffsetInSeconds = -14400;
+const long daylightSavingsOffset = 3600;
 
 WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds);
+NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetInSeconds-daylightSavingsOffset);
 
 //dht reading input to gpio 19/MISO on M5Stack
 //I only used this pin for convenience, adjust below if using a different gpio pin
 #define dht_apin 19
+
 dht DHT;
 
 void setup() {
@@ -46,12 +48,13 @@ void loop() {
   displayTemperature();
   displayHumidity();
   displayTime();
+  displayDate();
   delay(1000);
   M5.update();
 }
-void displayTemperature(){
+int displayTemperature(){
   int cTemp = DHT.temperature;
-  M5.Lcd.setCursor(0,0,1);
+  M5.Lcd.setCursor(12,0,1);
   M5.Lcd.setTextSize(5);
   M5.Lcd.print((int)round(1.8*cTemp+32));
   M5.Lcd.print("F");
@@ -70,8 +73,12 @@ void displayHumidity(){
 }
 
 void displayTime(){
-  M5.Lcd.setCursor(57,100,1);
+  M5.Lcd.setCursor(57,97,1);
   M5.Lcd.setTextSize(10);
+  if (timeClient.getHours() < 10){
+    M5.Lcd.setCursor(40,97,1);
+    M5.Lcd.print(" ");
+  }
   M5.Lcd.print(timeClient.getHours());
   M5.Lcd.print(":");
   if (timeClient.getMinutes() < 10){
@@ -79,4 +86,31 @@ void displayTime(){
   }
   M5.Lcd.print(timeClient.getMinutes());
   M5.Lcd.print("  ");
+}
+void displayDate(){
+  static int dayOfTheWeek;
+  dayOfTheWeek = timeClient.getDay();
+  M5.Lcd.setCursor(117,200,1);
+  M5.Lcd.setTextSize(5);
+  if (dayOfTheWeek == 1){
+    M5.Lcd.print("MON");
+  }
+  else if (dayOfTheWeek == 2){
+    M5.Lcd.print("TUE");
+  }
+  else if (dayOfTheWeek == 3){
+    M5.Lcd.print("WED");
+  }
+  else if (dayOfTheWeek == 4){
+    M5.Lcd.print("THU");
+  }
+  else if (dayOfTheWeek == 5){
+    M5.Lcd.print("FRI");
+  }
+  else if (dayOfTheWeek == 6){
+    M5.Lcd.print("SAT");
+  }
+  else if (dayOfTheWeek == 7){
+    M5.Lcd.print("SUN");
+  }
 }
